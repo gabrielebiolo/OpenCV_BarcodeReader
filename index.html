@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Reader</title>
+
+    <style>
+        video,
+        canvas {
+            width: 320;
+            height: 240;
+
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <video id="webcam"></video>
+    <canvas id="frame"></canvas>
+    <canvas id="output"></canvas>
+
+    <script async onload="openCvReady();" src="opencv.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        function openCvReady() {
+            cv['onRuntimeInitialized']=()=>{
+                // do all your work here
+                var width = 320;
+                var height = 240;
+                let video = document.getElementById("webcam"); // video is the id of video tag
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    .then(function(stream) {
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(function(err) {
+                        console.log("An error occurred! " + err);
+                    });
+
+                let canvasFrame = document.getElementById("frame"); // canvasFrame is the id of <canvas>
+                let context = canvasFrame.getContext("2d");
+                let src = new cv.Mat(height, width, cv.CV_8UC4);
+                let dst = new cv.Mat(height, width, cv.CV_8UC1);
+                const FPS = 30;
+                function processVideo() {
+                    let begin = Date.now();
+                    context.drawImage(video, 0, 0, width, height);
+                    src.data.set(context.getImageData(0, 0, width, height).data);
+                    cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+                    cv.imshow("output", dst); // canvasOutput is the id of another <canvas>;
+                    // schedule next one.
+                    let delay = 1000/FPS - (Date.now() - begin);
+                    setTimeout(processVideo, delay);
+                }
+                // schedule first one.
+                setTimeout(processVideo, 0);
+            };
+        }
+
+        // function onOpenCVReady() {
+        //     var width = 320;
+        //     var height = 240;
+        //     let video = document.getElementById("webcam"); // video is the id of video tag
+        //     navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        //         .then(function(stream) {
+        //             video.srcObject = stream;
+        //             video.play();
+        //         })
+        //         .catch(function(err) {
+        //             console.log("An error occurred! " + err);
+        //         });
+
+        //     let canvasFrame = document.getElementById("frame"); // canvasFrame is the id of <canvas>
+        //     let context = canvasFrame.getContext("2d");
+        //     let src = new cv.Mat(height, width, cv.CV_8UC4);
+        //     let dst = new cv.Mat(height, width, cv.CV_8UC1);
+        //     const FPS = 30;
+        //     function processVideo() {
+        //         let begin = Date.now();
+        //         context.drawImage(video, 0, 0, width, height);
+        //         src.data.set(context.getImageData(0, 0, width, height).data);
+        //         cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+        //         cv.imshow("output", dst); // canvasOutput is the id of another <canvas>;
+        //         // schedule next one.
+        //         let delay = 1000/FPS - (Date.now() - begin);
+        //         setTimeout(processVideo, delay);
+        //     }
+        //     // schedule first one.
+        //     setTimeout(processVideo, 0);
+        // }
+    </script>
+</body>
+</html>
